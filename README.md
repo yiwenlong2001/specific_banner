@@ -1,5 +1,5 @@
 ### Introduction
-This repo is bulit base on https://github.com/microsoft/banner-settings-ado-extension  
+This repo is bulit based on https://github.com/microsoft/banner-settings-ado-extension and realize the funtion of repo/project-specific banner.  
 
 
 ![](static/screenshot.png)
