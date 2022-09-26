@@ -1,0 +1,79 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
+@import "node_modules/azure-devops-ui/Core/_platformCommon.scss";
+
+.container {
+    font-size: $fontSizeM;
+}
+
+.no-data-view {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+// .upload{
+//     flex: 1 1 auto;
+//     margin: 60px;
+// }
+
+.error-message-card {
+    margin: 16px;
+}
+
+.items-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+
+    .date-infos {
+        flex: 1 1 auto;
+        margin: 60px;
+    }
+
+    .instruction-text {
+        margin: 16px 0;
+        text-align: center;
+    }
+}
+
+.indicate_text{
+    display: inline-block;
+}
+
+[type='checkbox']{
+    display: None;
+}
+ 
+.switch{
+	width: 80px;
+	height: 30px;
+	background: #F3F3F3;
+	display: inline-block;
+	border-radius: 20px;
+    margin: 20px;
+}
+		
+.switch>.ball{
+	display: block;
+    display: inline-block;
+	width:25px;
+	height: 25px;
+	border-radius: 15px;
+	background: #5a5f52;
+	border: 2px solid #000000;
+	margin: 0px;
+}
+	
+[type='checkbox']:checked+label{
+	background: rgb(255, 255, 255);
+    display: inline-block;
+}
+			
+[type='checkbox']:checked+label>.ball{
+	margin-left: 55px;
+    display: inline-block;
+}

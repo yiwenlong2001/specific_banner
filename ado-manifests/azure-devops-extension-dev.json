@@ -1,0 +1,40 @@
+{
+    "id": "specific-banner",
+    "name": "specific-banner",
+    "version": "1.1.48",
+    "publisher": "t-wenlongyi",
+    "public": false,
+    "contributions": [
+        {
+            "id": "action",
+            "type": "ms.vss-web.action-provider",
+            "targets": [
+                "ms.vss-code-web.source-item-menu"
+            ],
+            "properties": {
+                "text": "fresh",
+                "uri": "dist/repo.html",
+                "iconName" : "Add",
+                "registeredObjectId": "show-banner"
+            }
+        },
+        {
+            "id": "hub",
+            "type": "ms.vss-web.hub",
+            "targets": [
+                "ms.vss-web.collection-admin-hub-group"
+            ],
+            "includes": [
+                "ms.vss-tfs-web.tfs-page-data-service",
+                "ms.vss-features.host-navigation-service",
+                "ms.vss-features.extension-data-service",
+                "ms.vss-features.host-dialog-service"
+            ],
+            "properties": {
+                "name": "Banner (Dev)",
+                "uri": "dist/index.html",
+                "icon": "asset://static/sample-icon.png"
+            }
+        }
+    ]
+}

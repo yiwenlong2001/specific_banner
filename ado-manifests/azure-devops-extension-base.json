@@ -1,0 +1,38 @@
+{
+    "manifestVersion": 1,
+    "name": "specific banner",
+    "description": "repo specific banner",
+    "categories": "Azure Boards",
+    "targets": [
+        {
+            "id": "Microsoft.VisualStudio.Services.Cloud"
+        },
+        {
+            "id": "Microsoft.TeamFoundation.Server",
+            "version": "[17.0,)"
+        }
+    ],
+    "icons": {
+        "default": "../static/icon.png"
+    },
+    "files": [
+        {
+            "path": "../static",
+            "addressable": true
+        },
+        {
+            "path": "../dist",
+            "addressable": true
+        }
+    ],
+    "scopes": [
+        "vso.settings_write"
+    ],
+    "tags": [
+        "Organization Settings",
+        "Banner",
+        "Alert",
+        "Account",
+        "Admin"
+    ]
+}
