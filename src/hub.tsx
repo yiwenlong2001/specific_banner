@@ -64,17 +64,20 @@ class HubComponent extends React.Component<{}, IHubComponentState> {
             const webEntity = JSON.parse(responseString) as ObjectListWithCount<string>
             Object.keys(webEntity.value).forEach((title) => {
                 if (title === "flag"){
-                    this.setState({toggle: webEntity.value[title] === "True"})
+                    this.setState({toggle: webEntity.value[title] === "true"})
                 }
                 else{
-                    if (title.split("/").length === 4){
-                        this.state.text.push(title.split("/")[1] + "." + title.split("/")[2] + "." + webEntity.value[title].split("&&")[0] + "." + webEntity.value[title].split("&&")[1])
-                    }
-                    else{
-                        this.state.text.push(title.split("/")[1] + "." + "all repo" + "." + webEntity.value[title].split("&&")[0] + "." + webEntity.value[title].split("&&")[1])
+                    if (title.split("/")[0] === "date"){
+                        if (title.split("/").length === 4){
+                            this.state.text.push(title.split("/")[1] + "." + title.split("/")[2] + "." + webEntity.value[title].split("&&")[0] + "." + webEntity.value[title].split("&&")[1])
+                        }
+                        else{
+                            this.state.text.push(title.split("/")[1] + "." + "all repo" + "." + webEntity.value[title].split("&&")[0] + "." + webEntity.value[title].split("&&")[1])
+                        }
                     }
                 }
             });
+            console.log(this.state);
             this.setState({ loading: false });
         } catch (ex) {
             this.setState({ loading: false, errorText: `There was an error loading the text: ${ex.message}` });
@@ -159,18 +162,38 @@ class HubComponent extends React.Component<{}, IHubComponentState> {
         return [
             {
                 id: "toggle",
-                ariaLabel: this.state.toggle ? "Close the specific banner" : "Show the specific banner",
-                iconProps: {
-                    iconName: this.state.toggle ? "Turn off" : "Turn on"
+                isPrimary: true,
+                important: true,
+                text: this.state.toggle ? "Turn off" : "Turn on",
+                tooltipProps: {
+                    text: this.state.toggle ? "Close the specific banner" : "Show the specific banner",
                 },
+                // iconProps: {
+                //     iconName: "Switch",
+                // },
                 onActivate: () => { this.set_toggle() }
+            },
+            {
+                id: "Choose",
+                text: "Choose file",
+                isPrimary: true,
+                important: true,
+                iconProps: {
+                    iconName: "Add",
+                },
+                // tooltipProps: {
+                //     text: document.getElementById('upload').innerText,
+                // },
+
+                onActivate: () => { this.choosefile(); },
             },
             {
                 id: "Upload",
                 text: "Upload file",
                 isPrimary: true,
+                important: true,
                 iconProps: {
-                    iconName: "Add",
+                    iconName: "Upload",
                 },
 
                 onActivate: () => { this.uploadfile(); },
@@ -179,6 +202,7 @@ class HubComponent extends React.Component<{}, IHubComponentState> {
                 id: "add",
                 text: "Add new data",
                 isPrimary: true,
+                important: true,
                 iconProps: {
                     iconName: "Add",
                 },
@@ -187,22 +211,25 @@ class HubComponent extends React.Component<{}, IHubComponentState> {
             {
                 id: "delete-all",
                 text: "Delete all data",
+                isPrimary: true,
+                important: true,
                 iconProps: {
                     iconName: "Delete",
                 },
                 onActivate: () => { this.onDeleteAllClicked(); },
             },
-            // {
-            //     id: "info",
-            //     subtle: true,
-            //     iconProps: {
-            //         iconName: "Info",
-            //     },
-            //     onActivate: () => { this.onAboutClicked(); },
-            //     tooltipProps: {
-            //         text: "About Banner Settings",
-            //     },
-            // },
+            {
+                id: "info",
+                subtle: true,
+                important: true,
+                iconProps: {
+                    iconName: "Info",
+                },
+                onActivate: () => { this.onAboutClicked(); },
+                tooltipProps: {
+                    text: "About Banner Settings",
+                },
+            },
         ];
     }
 
@@ -225,6 +252,12 @@ class HubComponent extends React.Component<{}, IHubComponentState> {
         });
     }
     
+    private async choosefile(): Promise<void>{
+        const file_choose = document.getElementById('upload');
+        file_choose.click();
+        console.log(document.getElementById('upload'))
+    }
+
     private async uploadfile(): Promise<void> {
         var getFileContent = function (fileInput, callback) {
             if (fileInput.files && fileInput.files.length > 0 && fileInput.files[0].size > 0) {
@@ -241,10 +274,6 @@ class HubComponent extends React.Component<{}, IHubComponentState> {
             }
         };
         getFileContent(document.getElementById('upload'), async function (evt,str) {
-            console.log(
-                evt
-            );
-            console.log(str);
             const date_list = str.split("\n")
             const locationService = await SDK.getService<ILocationService>(CommonServiceIds.LocationService);
             const rooturl = await locationService.getServiceLocation();
@@ -284,8 +313,8 @@ class HubComponent extends React.Component<{}, IHubComponentState> {
                             });
             console.log(ret);
         });
-        sleep(5000);
-        await this.componentDidMount();
+        await sleep(1500);
+        this.componentDidMount();
     }
     
     private async onAddClicked(): Promise<void>{

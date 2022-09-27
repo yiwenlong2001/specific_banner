@@ -1,7 +1,6 @@
 import "es6-promise/auto";
 import { CommonServiceIds,  IGlobalMessagesService, IGlobalMessageBanner, ILocationService } from "azure-devops-extension-api";
 import { IProjectPageService, IHostNavigationService } from "azure-devops-extension-api"
-// import fetch from 'node-fetch';
 import * as SDK from "azure-devops-extension-sdk";
 
 
@@ -37,8 +36,9 @@ SDK.notifyLoadSucceeded().then(
         });
         const responsetext = await response_flag.text();
         const webEntityflag = JSON.parse(responsetext) as ObjectListWithCount<string>
-        const flag = Object.keys(webEntityflag).indexOf("flag") !== -1 ?webEntityflag.value["flag"]: "False";
-        if (flag === "False"){
+        const flag = Object.keys(webEntityflag.value).indexOf("flag") !== -1 ?webEntityflag.value["flag"]: "false";
+        console.log(flag);
+        if (flag === "false"){
             return;
         }
 

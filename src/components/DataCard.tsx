@@ -82,6 +82,7 @@ export class BannerCard extends React.Component<IBannerCardProps, IBannerCardSta
                             </div>
                         </Tooltip>
                         <FormItem className="header-message">
+                            <label className="itemTitle">Project Name: </label>
                             <TextField
                                 value={this.state.project}
                                 onChange={(e, newValue) => {
@@ -94,6 +95,7 @@ export class BannerCard extends React.Component<IBannerCardProps, IBannerCardSta
                                 placeholder="project name"
                                 style={TextFieldStyle.inline}
                             />
+                            <label className="itemTitle">Repo Name: </label>
                             <TextField
                                 value={this.state.repo}
                                 onChange={(e, newValue) => {
@@ -103,9 +105,10 @@ export class BannerCard extends React.Component<IBannerCardProps, IBannerCardSta
                                     });
                                     this.ensureMarkedDirty();
                                 }}
-                                placeholder="repo name"
+                                placeholder="repo name (If it is a project-specific banner, keep it empty)"
                                 style={TextFieldStyle.inline}
                             />
+                            <label className="itemTitle">Message: </label>
                             <TextField
                                 prefixIconProps={{ iconName: Level[this.state.level] }}
                                 value={this.state.message}
