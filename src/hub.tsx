@@ -26,6 +26,7 @@ function sleep(timeout) {
 
 interface IHubComponentState {
     text: string[];
+    toggle: boolean;
     loading: boolean;
     errorText: string;
 }
@@ -38,6 +39,7 @@ class HubComponent extends React.Component<{}, IHubComponentState> {
 
         this.state = {
             text: [],
+            toggle: true,
             loading: false,
             errorText: null,
         };
@@ -51,16 +53,7 @@ class HubComponent extends React.Component<{}, IHubComponentState> {
             const locationService = await SDK.getService<ILocationService>(CommonServiceIds.LocationService);
             const rooturl = await locationService.getServiceLocation();
             const accessToken = await SDK.getAccessToken();
-            // const url2 = `${rooturl}_apis/settings/entries/host/flag?api-version=3.2-preview`;
-            // const response2 = await window.fetch(url2, {
-            //     method: "GET",
-            //     headers: {
-            //         Authorization: `Bearer ${accessToken}`,
-            //     },
-            // });
-            // const responseString2 = await response2.text();
-            // console.log(responseString2)
-            const url = `${rooturl}_apis/settings/entries/host/date?api-version=3.2-preview`;
+            const url = `${rooturl}_apis/settings/entries/host?api-version=3.2-preview`;
             const response = await window.fetch(url, {
                 method: "GET",
                 headers: {
@@ -70,13 +63,17 @@ class HubComponent extends React.Component<{}, IHubComponentState> {
             const responseString = await response.text();
             const webEntity = JSON.parse(responseString) as ObjectListWithCount<string>
             Object.keys(webEntity.value).forEach((title) => {
-                if (title.split("/").length === 3){
-                    this.state.text.push(title.split("/")[0] + "." + title.split("/")[1] + "." + webEntity.value[title].split("&&")[0] + "." + webEntity.value[title].split("&&")[1])
+                if (title === "flag"){
+                    this.setState({toggle: webEntity.value[title] === "True"})
                 }
                 else{
-                    this.state.text.push(title.split("/")[0] + "." + "all repo" + "." + webEntity.value[title].split("&&")[0] + "." + webEntity.value[title].split("&&")[1])
+                    if (title.split("/").length === 4){
+                        this.state.text.push(title.split("/")[1] + "." + title.split("/")[2] + "." + webEntity.value[title].split("&&")[0] + "." + webEntity.value[title].split("&&")[1])
+                    }
+                    else{
+                        this.state.text.push(title.split("/")[1] + "." + "all repo" + "." + webEntity.value[title].split("&&")[0] + "." + webEntity.value[title].split("&&")[1])
+                    }
                 }
-                console.log(webEntity.value[title])
             });
             this.setState({ loading: false });
         } catch (ex) {
@@ -95,11 +92,11 @@ class HubComponent extends React.Component<{}, IHubComponentState> {
                 <div className="upload">
                 <input type="file" name="upload" id="upload" accept=".csv"/>
                 </div>
-                <div className="indicate_text" >Whether to show specific banner:</div>
+                {/* <div className="indicate_text" >Whether to show specific banner:</div>
                 <input type="checkbox" id="on" onClick={this.set_open} />
                 <label  className="switch" htmlFor="on">
                         <span className="ball"></span>
-                </label>
+                </label> */}
                 </Header>
                 {
                     this.state.errorText == null ? null :
@@ -161,6 +158,14 @@ class HubComponent extends React.Component<{}, IHubComponentState> {
     private getCommandBarItems(): IHeaderCommandBarItem[] {
         return [
             {
+                id: "toggle",
+                ariaLabel: this.state.toggle ? "Close the specific banner" : "Show the specific banner",
+                iconProps: {
+                    iconName: this.state.toggle ? "Turn off" : "Turn on"
+                },
+                onActivate: () => { this.set_toggle() }
+            },
+            {
                 id: "Upload",
                 text: "Upload file",
                 isPrimary: true,
@@ -201,20 +206,15 @@ class HubComponent extends React.Component<{}, IHubComponentState> {
         ];
     }
 
-    private async set_open(): Promise<void>{
-        var onoffswitch = document.getElementById("on");
+    private async set_toggle(): Promise<void>{
         const locationService = await SDK.getService<ILocationService>(CommonServiceIds.LocationService);
+        this.setState({toggle: !this.state.toggle})
         const rooturl = await locationService.getServiceLocation();
         const accessToken = await SDK.getAccessToken();
         const url = `${rooturl}_apis/settings/entries/host?api-version=3.2-preview`;
         const ret: {[name: string]: string} = {};
         const title = "flag";
-        if (onoffswitch.checked){
-            ret[title] = "True";
-        }
-        else{
-            ret[title] = "False";
-        }
+        ret[title] = this.state.toggle.toString();
         const response = await window.fetch(url, {
             method: "PATCH",
             body: JSON.stringify(ret),

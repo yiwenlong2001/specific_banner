@@ -37,7 +37,7 @@ SDK.notifyLoadSucceeded().then(
         });
         const responsetext = await response_flag.text();
         const webEntityflag = JSON.parse(responsetext) as ObjectListWithCount<string>
-        const flag = webEntityflag.value["flag"]
+        const flag = Object.keys(webEntityflag).indexOf("flag") !== -1 ?webEntityflag.value["flag"]: "False";
         if (flag === "False"){
             return;
         }

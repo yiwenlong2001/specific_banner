@@ -53,7 +53,6 @@ export class BannerCard extends React.Component<IBannerCardProps, IBannerCardSta
             loading: false,
             expanded: false,
         };
-        console.log(this.state);
     }
 
     public componentDidMount(): void {
