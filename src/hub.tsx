@@ -19,6 +19,8 @@ import { ZeroData, ZeroDataActionType } from "azure-devops-ui/ZeroData";
 
 import { showRootComponent } from "./common/common";
 import { BannerCard } from "./components/DataCard";
+import { ChangeEventHandler } from "react";
+import moment = require("moment");
 
 function sleep(timeout) {
     return new Promise(resolve => setTimeout(resolve, timeout))
@@ -27,6 +29,7 @@ function sleep(timeout) {
 interface IHubComponentState {
     text: string[];
     toggle: boolean;
+    filename: string;
     loading: boolean;
     errorText: string;
 }
@@ -40,6 +43,7 @@ class HubComponent extends React.Component<{}, IHubComponentState> {
         this.state = {
             text: [],
             toggle: true,
+            filename: "",
             loading: false,
             errorText: null,
         };
@@ -48,6 +52,7 @@ class HubComponent extends React.Component<{}, IHubComponentState> {
 
     public async componentDidMount(): Promise<void> {
         this.setState({ loading: true });
+        this.setState({ text: [] });
 
         try {
             const locationService = await SDK.getService<ILocationService>(CommonServiceIds.LocationService);
@@ -69,15 +74,15 @@ class HubComponent extends React.Component<{}, IHubComponentState> {
                 else{
                     if (title.split("/")[0] === "date"){
                         if (title.split("/").length === 4){
-                            this.state.text.push(title.split("/")[1] + "." + title.split("/")[2] + "." + webEntity.value[title].split("&&")[0] + "." + webEntity.value[title].split("&&")[1])
+                            this.state.text.push(title.split("/")[1] + "." + title.split("/")[2] + "." + title.split("/")[3] + "." + webEntity.value[title].split("&&")[0] + "." + webEntity.value[title].split("&&")[1] + "." + webEntity.value[title].split("&&")[2])
                         }
                         else{
-                            this.state.text.push(title.split("/")[1] + "." + "all repo" + "." + webEntity.value[title].split("&&")[0] + "." + webEntity.value[title].split("&&")[1])
+                            this.state.text.push(title.split("/")[1] + "." + "all repo" +  "." + title.split("/")[2] + "." + webEntity.value[title].split("&&")[0] + "." + webEntity.value[title].split("&&")[1] + "." + webEntity.value[title].split("&&")[2])
                         }
                     }
                 }
             });
-            console.log(this.state);
+            // console.log(this.state);
             this.setState({ loading: false });
         } catch (ex) {
             this.setState({ loading: false, errorText: `There was an error loading the text: ${ex.message}` });
@@ -93,7 +98,7 @@ class HubComponent extends React.Component<{}, IHubComponentState> {
                     titleSize={TitleSize.Large}
                 >
                 <div className="upload">
-                <input type="file" name="upload" id="upload" accept=".csv"/>
+                <input type="file" name="upload" id="upload" accept=".csv" onChange={this.setfilename} />
                 </div>
                 {/* <div className="indicate_text" >Whether to show specific banner:</div>
                 <input type="checkbox" id="on" onClick={this.set_open} />
@@ -121,11 +126,11 @@ class HubComponent extends React.Component<{}, IHubComponentState> {
                                         text={data}
                                         onSave={(newdata) => {
                                             const { text } = this.state;
-                                            console.log(text)
                                             text[index] = newdata;
                                             this.setState({ text });
                                         }}
                                         onDelete={() => {
+                                            // console.log(data, index);
                                             const { text } = this.state;
                                             text.splice(index, 1);
                                             this.setState({ text });
@@ -181,9 +186,9 @@ class HubComponent extends React.Component<{}, IHubComponentState> {
                 iconProps: {
                     iconName: "Add",
                 },
-                // tooltipProps: {
-                //     text: document.getElementById('upload').innerText,
-                // },
+                tooltipProps: {
+                    text: this.state.filename === "" ? "Choose an CSV file to upload": "The file name is " + this.state.filename,
+                },
 
                 onActivate: () => { this.choosefile(); },
             },
@@ -255,8 +260,15 @@ class HubComponent extends React.Component<{}, IHubComponentState> {
     private async choosefile(): Promise<void>{
         const file_choose = document.getElementById('upload');
         file_choose.click();
-        console.log(document.getElementById('upload'))
     }
+
+    private setfilename = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const enteredName = event.target.value;
+        const pathlist = enteredName.split("\\");
+        const listlength = pathlist.length;
+        this.setState({filename: pathlist[listlength - 1]});
+        // console.log(this.state);
+      };
 
     private async uploadfile(): Promise<void> {
         var getFileContent = function (fileInput, callback) {
@@ -280,18 +292,26 @@ class HubComponent extends React.Component<{}, IHubComponentState> {
             const accessToken = await SDK.getAccessToken();
             const url = `${rooturl}_apis/settings/entries/host?api-version=3.2-preview`;
             const ret: {[name: string]: string} = {};
+            const order: {[name: string]: number} = {};
             const messageid = ((new Date()).getTime() % Number.MAX_SAFE_INTEGER).toString();
             for(const date of date_list){
                 const repo_date = date.replace("\r", "").split(", ")
-                console.log(repo_date)
-                if (repo_date[1] === "repo_name"){
+                // console.log(repo_date)
+                if (repo_date[0] === ("repo_name") || repo_date[0] === ("project_name") || repo_date[0] === ("message") || repo_date[0] === ("expirytime") || repo_date[0] === ("level")){
+                    let ordernum:number = 0;
+                    for(const keyword of repo_date){
+                        order[keyword] = ordernum;
+                        ordernum += 1;
+                    }
+                    // console.log(order)
                     continue;
                 }
-                const project = repo_date[0];
-                const repo = repo_date[1];
+                const project = repo_date[order["project_name"]];
+                const repo = repo_date[order["repo_name"]];
+                const message = repo_date[order["message"]]
                 let title:string = ""
-                if (project === ""){
-                    title = `date/${messageid}`;
+                if (project === "" || message === ""){
+                    this.setState({ errorText: "Project Name and Message should not be empty" });
                 }
                 else{
                     if (repo === ""){
@@ -300,9 +320,12 @@ class HubComponent extends React.Component<{}, IHubComponentState> {
                     else{
                         title = `date/${project}/${repo}/${messageid}`;
                     }
+                    const level = Object.keys(order).indexOf("level") !== -1 ? repo_date[order["level"]]: "0";
+                    const expirytime = Object.keys(order).indexOf("expirytime") !== -1 ? (repo_date[order["expirytime"]] !== ""? moment(repo_date[order["expirytime"]], "MM/DD/YYYY HH:mm", true).toDate().toString(): ""): "";
+                    ret[title] = message + "&&" + level + "&&" + expirytime;
                 }
-                ret[title] = repo_date[2] + "&&" + repo_date[3];
             }
+            // console.log(ret);
             const response = await window.fetch(url, {
                                 method: "PATCH",
                                 body: JSON.stringify(ret),
@@ -311,7 +334,6 @@ class HubComponent extends React.Component<{}, IHubComponentState> {
                                     "Content-Type": "application/json",
                                 },
                             });
-            console.log(ret);
         });
         await sleep(1500);
         this.componentDidMount();
@@ -319,7 +341,7 @@ class HubComponent extends React.Component<{}, IHubComponentState> {
     
     private async onAddClicked(): Promise<void>{
         const { text } = this.state;
-        text.push("...");
+        text.push(".....");
         this.setState({text});
     }
 

@@ -20,6 +20,7 @@ import { ExpiryPicker } from "./expiryPicker";
 import { LevelDropdown } from "./levelDropdown";
 import * as SDK from "azure-devops-extension-sdk";
 import { ILocationService, CommonServiceIds } from "azure-devops-extension-api";
+import { stripTimeFromDate } from "VSS/Utils/Date";
 
 interface IBannerCardProps {
     text: string
@@ -42,17 +43,22 @@ export class BannerCard extends React.Component<IBannerCardProps, IBannerCardSta
         const text = this.props.text;
         const project = text.split(".")[0];
         const repo = text.split(".")[1];
-        const message = text.split(".")[2];
-        const level = Number(text.split(".")[3]);
+        const messageid = text.split(".")[2];
+        const message = text.split(".")[3];
+        const level = Number(text.split(".")[4]);
+        const expirytime = text.split(".")[5]!==""? new Date(text.split(".")[5]) : null;
         this.state = {
             level: level,
             project: project,
             repo: repo,
             message: message,
+            messageId: messageid,
             dirty: false,
             loading: false,
             expanded: false,
+            expirationDate: expirytime,
         };
+        // console.log(this.state);
     }
 
     public componentDidMount(): void {
@@ -62,6 +68,7 @@ export class BannerCard extends React.Component<IBannerCardProps, IBannerCardSta
     public componentDidUpdate(prevProps: IBannerCardProps): void {
         if (JSON.stringify(prevProps.text) !== JSON.stringify(this.props.text)) {
             this.setupFields();
+            console.log(this.state);
         }
     }
 
@@ -186,16 +193,37 @@ export class BannerCard extends React.Component<IBannerCardProps, IBannerCardSta
         const project = this.state.project;
         const repo = this.state.repo;
         const message = this.state.message;
-        const level = `${this.state.level}`
-        const messageid = ((new Date()).getTime() % Number.MAX_SAFE_INTEGER).toString();
-        const data = message + "&&" + level;
+        const level = `${this.state.level}`;
+        let messageid: string;
+        if (this.state.messageId === ""){
+            const messageidtmp = ((new Date()).getTime() % Number.MAX_SAFE_INTEGER).toString();
+            this.setState({ messageId: messageidtmp });
+            messageid = messageidtmp;
+        }
+        else{
+            messageid = this.state.messageId;
+        }
+        const expirytime = this.state.expirationDate !== null ? this.state.expirationDate.toString(): "";
+        const data = message + "&&" + level + "&&" + expirytime;
+
+        if (project === ""){
+            this.setState({ messageErrorText: "Project Name should not be empty" });
+            return;
+        }
+
+        if (message === ""){
+            this.setState({ messageErrorText: "Message should not be empty" });
+            return;
+        }
+
+        console.log(this.state);
 
         try {
             const locationService = await SDK.getService<ILocationService>(CommonServiceIds.LocationService);
             const rooturl = await locationService.getServiceLocation();
             const accessToken = await SDK.getAccessToken();
             const url = `${rooturl}_apis/settings/entries/host?api-version=3.2-preview`;
-            console.log(url);
+            // console.log(url);
             const ret: {[name: string]: string} = {};
             let title:string = "";
             if (project === ""){
@@ -218,9 +246,9 @@ export class BannerCard extends React.Component<IBannerCardProps, IBannerCardSta
                                     "Content-Type": "application/json",
                                 },
                             });
-            console.log(ret);
+            // console.log(ret);
 
-            this.props.onSave(`${project}.${repo}.${data}`);
+            this.props.onSave(`${project}.${repo}.${messageid}.${message}.${level}.${expirytime}`);
 
             this.setState({ dirty: false, loading: false });
         } catch (ex) {
@@ -230,37 +258,27 @@ export class BannerCard extends React.Component<IBannerCardProps, IBannerCardSta
 
     private async deleteBanner(): Promise<void> {
         try {
-            const locationService = await SDK.getService<ILocationService>(CommonServiceIds.LocationService);
-            const rooturl = await locationService.getServiceLocation();
-            const accessToken = await SDK.getAccessToken();
-            const url = `${rooturl}_apis/settings/entries/host/date?api-version=3.2-preview`;
-            console.log(url);
-            const response = await window.fetch(url, {
-                method: "GET",
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                },
-            });
-            const responseString = await response.text();
-            const webEntity = JSON.parse(responseString) as ObjectListWithCount<string>
-            if (Object.keys(webEntity.value).indexOf(`${this.state.project}/${this.state.repo}`) !== -1){
-                await this.deleteWebdata(this.state.project, this.state.repo);
+            // console.log(this.state);
+            if (this.state.messageId !== ""){
+                await this.deleteWebdata(this.state.project, this.state.repo, this.state.messageId);
             }
-            // if (this.state.project === null || this.state.repo === null || this.state.message === null ){
-            //     await this.deleteWebdata(this.state.project, this.state.repo);
-            // }
-
             this.props.onDelete();
         } catch (ex) {
             this.setState({ messageErrorText: "Unable to delete" });
         }
     }
 
-    private async deleteWebdata(project : string, repo : string): Promise<void> {
+    private async deleteWebdata(project : string, repo : string, messageid: string): Promise<void> {
         const locationService = await SDK.getService<ILocationService>(CommonServiceIds.LocationService);
         const rootUrl = await locationService.getServiceLocation();
         const accessToken = await SDK.getAccessToken();
-        const url = `${rootUrl}_apis/settings/entries/host/date/${project}/${repo}?api-version=3.2-preview`;
+        let url:string = "";
+        if (repo !== "all repo"){
+            url = `${rootUrl}_apis/settings/entries/host/date/${project}/${repo}/${messageid}?api-version=3.2-preview`;
+        }
+        else{
+            url = `${rootUrl}_apis/settings/entries/host/date/${project}/${messageid}?api-version=3.2-preview`;
+        }
         const response = await window.fetch(url, {
             method: "DELETE",
             headers: {
@@ -290,24 +308,29 @@ export class BannerCard extends React.Component<IBannerCardProps, IBannerCardSta
     }
 
     private setupFields(): void {
-        if (this.props.text == null) {
+        if (this.props.text === null) {
             return;
         }
 
         const text = this.props.text;
+        console.log(text);
         const project = text.split(".")[0];
         const repo = text.split(".")[1];
-        const message = text.split(".")[2];
-        const level = Number(text.split(".")[3]);
-        this.state = {
+        const messageid = text.split(".")[2];
+        const message = text.split(".")[3];
+        const level = Number(text.split(".")[4]);
+        const expirytime = text.split(".")[5]!==""? new Date(text.split(".")[5]) : null;
+        this.setState({
             level: level,
             project: project,
             repo: repo,
             message: message,
+            messageId: messageid,
             dirty: false,
             loading: false,
             expanded: false,
-        };
+            expirationDate: expirytime,
+        });
     }
 
     private getStatusProps(): IStatusProps {
