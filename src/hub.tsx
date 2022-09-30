@@ -293,9 +293,10 @@ class HubComponent extends React.Component<{}, IHubComponentState> {
             const url = `${rooturl}_apis/settings/entries/host?api-version=3.2-preview`;
             const ret: {[name: string]: string} = {};
             const order: {[name: string]: number} = {};
-            const messageid = ((new Date()).getTime() % Number.MAX_SAFE_INTEGER).toString();
             for(const date of date_list){
                 const repo_date = date.replace("\r", "").split(", ")
+                const messageid = ((new Date()).getTime() % Number.MAX_SAFE_INTEGER + Math.round(Number.MAX_SAFE_INTEGER * Math.random())).toString();
+                console.log(messageid);
                 // console.log(repo_date)
                 if (repo_date[0] === ("repo_name") || repo_date[0] === ("project_name") || repo_date[0] === ("message") || repo_date[0] === ("expirytime") || repo_date[0] === ("level")){
                     let ordernum:number = 0;
