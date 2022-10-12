@@ -65,8 +65,8 @@ SDK.notifyLoadSucceeded().then(
             else{
                 datainfo = webEntity.value[title];
                 let banner : IGlobalMessageBanner = {
-                    message: datainfo.split("&&")[0],
-                    level: Number(datainfo.split("&&")[1]),
+                    message: datainfo["message"],
+                    level: Number(datainfo["level"]),
                 } 
                 GlobalMessagesService.addBanner(banner);
             }
@@ -86,8 +86,8 @@ SDK.notifyLoadSucceeded().then(
         Object.keys(webEntity2.value).forEach((title) => {
                 datainfo = webEntity2.value[title];
                 let banner : IGlobalMessageBanner = {
-                    message: datainfo.split("&&")[0],
-                    level: Number(datainfo.split("&&")[1]),
+                    message: datainfo["message"],
+                    level: Number(datainfo["level"]),
                 } 
                 GlobalMessagesService.addBanner(banner);
             })

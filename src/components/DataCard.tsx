@@ -23,8 +23,8 @@ import { ILocationService, CommonServiceIds } from "azure-devops-extension-api";
 import { stripTimeFromDate } from "VSS/Utils/Date";
 
 interface IBannerCardProps {
-    text: string
-    onSave(text: string): void;
+    text: {[key:string]:string};
+    onSave(text: {[key:string]:string}): void;
     onDelete(): void;
 }
 
@@ -41,12 +41,13 @@ export class BannerCard extends React.Component<IBannerCardProps, IBannerCardSta
         super(props);
 
         const text = this.props.text;
-        const project = text.split(".")[0];
-        const repo = text.split(".")[1];
-        const messageid = text.split(".")[2];
-        const message = text.split(".")[3];
-        const level = Number(text.split(".")[4]);
-        const expirytime = text.split(".")[5]!==""? new Date(text.split(".")[5]) : null;
+        console.log(text);
+        const project = text["project"];
+        const repo = text["repo"];
+        const messageid = text["messageId"];
+        const message = text["message"];
+        const level = Number(text["level"]);
+        const expirytime = text["expirationDate"]!==""? new Date(text["expirationDate"]) : null;
         this.state = {
             level: level,
             project: project,
@@ -68,7 +69,7 @@ export class BannerCard extends React.Component<IBannerCardProps, IBannerCardSta
     public componentDidUpdate(prevProps: IBannerCardProps): void {
         if (JSON.stringify(prevProps.text) !== JSON.stringify(this.props.text)) {
             this.setupFields();
-            console.log(this.state);
+            // console.log(this.state);
         }
     }
 
@@ -204,7 +205,11 @@ export class BannerCard extends React.Component<IBannerCardProps, IBannerCardSta
             messageid = this.state.messageId;
         }
         const expirytime = this.state.expirationDate !== null ? this.state.expirationDate.toString(): "";
-        const data = message + "&&" + level + "&&" + expirytime;
+        const data = {
+            "message": message,
+            "level": level,
+            "expirytime": expirytime,
+        };
 
         if (project === ""){
             this.setState({ messageErrorText: "Project Name should not be empty" });
@@ -216,7 +221,7 @@ export class BannerCard extends React.Component<IBannerCardProps, IBannerCardSta
             return;
         }
 
-        console.log(this.state);
+        // console.log(this.state);
 
         try {
             const locationService = await SDK.getService<ILocationService>(CommonServiceIds.LocationService);
@@ -224,7 +229,7 @@ export class BannerCard extends React.Component<IBannerCardProps, IBannerCardSta
             const accessToken = await SDK.getAccessToken();
             const url = `${rooturl}_apis/settings/entries/host?api-version=3.2-preview`;
             // console.log(url);
-            const ret: {[name: string]: string} = {};
+            const ret: {[name: string]: {[key:string]:string}} = {};
             let title:string = "";
             if (project === ""){
                 title = `date/${messageid}`;
@@ -247,8 +252,17 @@ export class BannerCard extends React.Component<IBannerCardProps, IBannerCardSta
                                 },
                             });
             // console.log(ret);
+            
+            const newtext: {[key:string]:string} = {
+                "project" : project,
+                "repo": repo,
+                "messageid": messageid,
+                "message": message,
+                "level": level,
+                "expirytime": expirytime,
+            }
 
-            this.props.onSave(`${project}.${repo}.${messageid}.${message}.${level}.${expirytime}`);
+            this.props.onSave(newtext);
 
             this.setState({ dirty: false, loading: false });
         } catch (ex) {
@@ -258,7 +272,7 @@ export class BannerCard extends React.Component<IBannerCardProps, IBannerCardSta
 
     private async deleteBanner(): Promise<void> {
         try {
-            // console.log(this.state);
+            console.log(this.state);
             if (this.state.messageId !== ""){
                 await this.deleteWebdata(this.state.project, this.state.repo, this.state.messageId);
             }
@@ -269,6 +283,7 @@ export class BannerCard extends React.Component<IBannerCardProps, IBannerCardSta
     }
 
     private async deleteWebdata(project : string, repo : string, messageid: string): Promise<void> {
+        console.log(project, repo, messageid);
         const locationService = await SDK.getService<ILocationService>(CommonServiceIds.LocationService);
         const rootUrl = await locationService.getServiceLocation();
         const accessToken = await SDK.getAccessToken();
@@ -313,13 +328,12 @@ export class BannerCard extends React.Component<IBannerCardProps, IBannerCardSta
         }
 
         const text = this.props.text;
-        console.log(text);
-        const project = text.split(".")[0];
-        const repo = text.split(".")[1];
-        const messageid = text.split(".")[2];
-        const message = text.split(".")[3];
-        const level = Number(text.split(".")[4]);
-        const expirytime = text.split(".")[5]!==""? new Date(text.split(".")[5]) : null;
+        const project = text["project"];
+        const repo = text["repo"];
+        const messageid = text["messageId"];
+        const message = text["message"];
+        const level = Number(text["level"]);
+        const expirytime = text["expirationDate"]!==""? new Date(text["expirationDate"]) : null;
         this.setState({
             level: level,
             project: project,

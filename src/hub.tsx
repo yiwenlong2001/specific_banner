@@ -27,7 +27,7 @@ function sleep(timeout) {
 }
 
 interface IHubComponentState {
-    text: string[];
+    text: {[key:string]:string}[];
     toggle: boolean;
     filename: string;
     loading: boolean;
@@ -74,10 +74,24 @@ class HubComponent extends React.Component<{}, IHubComponentState> {
                 else{
                     if (title.split("/")[0] === "date"){
                         if (title.split("/").length === 4){
-                            this.state.text.push(title.split("/")[1] + "." + title.split("/")[2] + "." + title.split("/")[3] + "." + webEntity.value[title].split("&&")[0] + "." + webEntity.value[title].split("&&")[1] + "." + webEntity.value[title].split("&&")[2])
+                            this.state.text.push({
+                                "level": webEntity.value[title]["level"],
+                                "project": title.split("/")[1],
+                                "repo": title.split("/")[2],
+                                "message": webEntity.value[title]["message"],
+                                "messageId": title.split("/")[3],
+                                "expirationDate": webEntity.value[title]["expirytime"],
+                            });
                         }
                         else{
-                            this.state.text.push(title.split("/")[1] + "." + "all repo" +  "." + title.split("/")[2] + "." + webEntity.value[title].split("&&")[0] + "." + webEntity.value[title].split("&&")[1] + "." + webEntity.value[title].split("&&")[2])
+                            this.state.text.push({
+                                "level": webEntity.value[title]["level"],
+                                "project": title.split("/")[1],
+                                "repo": "all repo",
+                                "message": webEntity.value[title]["message"],
+                                "messageId": title.split("/")[2],
+                                "expirationDate": webEntity.value[title]["expirytime"],
+                            });
                         }
                     }
                 }
@@ -291,7 +305,7 @@ class HubComponent extends React.Component<{}, IHubComponentState> {
             const rooturl = await locationService.getServiceLocation();
             const accessToken = await SDK.getAccessToken();
             const url = `${rooturl}_apis/settings/entries/host?api-version=3.2-preview`;
-            const ret: {[name: string]: string} = {};
+            const ret: {[name: string]: {[key:string]:string}} = {};
             const order: {[name: string]: number} = {};
             for(const date of date_list){
                 const repo_date = date.replace("\r", "").split(", ")
@@ -323,7 +337,11 @@ class HubComponent extends React.Component<{}, IHubComponentState> {
                     }
                     const level = Object.keys(order).indexOf("level") !== -1 ? repo_date[order["level"]]: "0";
                     const expirytime = Object.keys(order).indexOf("expirytime") !== -1 ? (repo_date[order["expirytime"]] !== ""? moment(repo_date[order["expirytime"]], "MM/DD/YYYY HH:mm", true).toDate().toString(): ""): "";
-                    ret[title] = message + "&&" + level + "&&" + expirytime;
+                    ret[title] = {
+                        "message": message,
+                        "level": level,
+                        "expirytime": expirytime,
+                    }
                 }
             }
             // console.log(ret);
@@ -342,7 +360,14 @@ class HubComponent extends React.Component<{}, IHubComponentState> {
     
     private async onAddClicked(): Promise<void>{
         const { text } = this.state;
-        text.push(".....");
+        text.push({
+            "level": "0",
+            "project": "",
+            "repo": "",
+            "message": "",
+            "messageId": "",
+            "expirationDate": "",
+        });
         this.setState({text});
     }
 
