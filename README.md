@@ -17,21 +17,30 @@ The whole design of the UI is not much different than that of the original one. 
 
 ### Restrictions
 
-- Currently the layout of the new button and toggle are naive. I will try to use the same component library as the ADO to redraw them to make the style consisted of once we reach the final agreement of the functionality and the UI design.
+- Currently the banner will display again when you revisit the current page or refresh the page. The only way to delete the banner is through organization-level control pane, or wait for the banner out of date.
 
 
 ### Building the project
+
+Before you run the following scripts, make sure you have completed these operations.
+- In ado-manifests\azure-devops-extension-dev.json, change the "publisher" to your publisher name.
+- (option) In ado-manifests\azure-devops-extension-dev.json, reset the id, version and other properties of the extension.
 
 Just run:
 
     npm run build:dev
     npm run package:dev
 
+* if you got an error like that "'webpack' is not recognized as an internal or external command", just run "run "npm install --save-dev webpack webpack-cli"" to install it locally.
+
+
 This produces a .vsix file which can be uploaded to the [Visual Studio Marketplace](https://marketplace.visualstudio.com/azuredevops)
 
 Publish it to your own publisher by running:
 
     npm run publish:dev
+
+* It require a global personal access token. If you don't have one, just publish it through [Visual Studio Marketplace](https://marketplace.visualstudio.com/azuredevops).
 
 You can then serve the extension locally and visit your newly published dev environment extension using
 
